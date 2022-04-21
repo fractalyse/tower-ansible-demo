@@ -5,13 +5,27 @@
   vars_files:
     - files/secrets/credentials.yml
   pre_tasks:
-    - name: Install EPEL repo
-      package: name=epel-release state=present
+    - name: "Install epel-release, git & wget"
+      package:
+        name: "{{ item }}"
+        state: present
       when: ansible_distribution == "CentOS"
-    - name: install python-pip
-      yum: name=python-pip state=present update_cache=yes
-    - name: Install docker python
-      pip: name=docker-py
+      loop:
+        - epel-release
+        - git
+        - wget
+
+    - name: "Get pip install script"
+      get_url:
+        url: https://bootstrap.pypa.io/pip/2.7/get-pip.py
+        dest: /tmp/get-pip.py
+    - name: "Install pip"
+      changed_when: false
+      command: python2.7 /tmp/get-pip.py
+    - name: "Install docker-py using script"
+      pip:
+        name: docker-py
+
   tasks:
     - name: Create Apache container
       docker_container:
